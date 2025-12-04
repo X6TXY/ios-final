@@ -1,0 +1,16 @@
+fastapi==0.123.7
+uvicorn[standard]==0.38.0
+SQLAlchemy[asyncio]==2.0.44
+alembic==1.17.2
+psycopg2-binary==2.9.10
+redis==5.2.0
+celery==5.4.0
+pydantic==2.12.5
+python-dotenv==1.0.1
+PyJWT==2.9.0
+passlib[bcrypt]==1.7.4
+openai==1.52.0
+httpx==0.27.2
+asyncpg==0.30.0
+pydantic[email]
+flower==2.0.1
