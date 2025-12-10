@@ -34,7 +34,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BV7-Ma-Jbr" userLabel=" CardView">
-                                <rect key="frame" x="47" y="178" width="299" height="457"/>
+                                <rect key="frame" x="47" y="126" width="299" height="457"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" systemColor="linkColor"/>
                             </view>
