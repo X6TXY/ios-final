@@ -38,7 +38,6 @@ class DetailsViewController: UIViewController {
         super.viewDidLoad()
         
         setupNavigationBar()
-        setupTabBar()
         
         synopsisContent.numberOfLines = 3
         expandButton.setImage(UIImage(systemName: "arrow.down"), for: .normal)
@@ -72,13 +71,6 @@ class DetailsViewController: UIViewController {
         navBar.tintColor = .white
     }
 
-    private func setupTabBar() {
-        guard let tabBar = tabBarController?.tabBar else { return }
-        tabBar.backgroundImage = UIImage()
-        tabBar.shadowImage = UIImage()
-        tabBar.isTranslucent = true
-        tabBar.backgroundColor = .clear
-    }
     
     @IBAction func expandedSynopsis(_ sender: UIButton) {
         isExpanded.toggle()
