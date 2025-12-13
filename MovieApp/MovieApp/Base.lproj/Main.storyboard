@@ -216,7 +216,7 @@
                                                             <constraint firstAttribute="height" constant="256" id="9nO-h4-EmE"/>
                                                         </constraints>
                                                     </imageView>
-                                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="iNK-sL-Fyf" userLabel="gradientLayer">
+                                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="iNK-sL-Fyf" userLabel="gradientLayer" customClass="GradientView" customModule="MovieApp" customModuleProvider="target">
                                                         <rect key="frame" x="0.0" y="0.0" width="393" height="256"/>
                                                         <constraints>
                                                             <constraint firstAttribute="height" constant="256" id="i9l-UP-j7u"/>
@@ -332,12 +332,12 @@
                                                 <subviews>
                                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="justified" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="h31-Z8-lO7" userLabel="SynopsisContent">
                                                         <rect key="frame" x="0.0" y="0.0" width="361" height="39.666666666666664"/>
-                                                        <mutableString key="text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam mollis urna a metus sagittis, non tincidunt est pulvinar. Phasellus pretium est vitae lorem accumsan, ac bibendum lacus euismod. Nulla facilisi. Phasellus sodales lobortis mauris, in porta velit luctus vel. Suspendisse vitae venenatis dolor. Donec tristique consequat nisl et blandit. Etiam mattis tellus lectus, id posuere nunc bibendum ut. Cras at nisi a est aliquam viverra. Cras quis ex turpis. Morbi et est id enim mollis convallis. Donec porta porttitor venenatis. Nunc non scelerisque neque. Suspendisse odio arcu, condimentum non elit maximus, accumsan luctus justo. Mauris sit amet lorem cursus, congue ipsum a, ornare lacus.</mutableString>
+                                                        <string key="text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam mollis urna a metus sagittis, non tincidunt est pulvinar. Phasellus pretium est vitae lorem accumsan, ac bibendum lacus euismod. Nulla facilisi. Phasellus sodales lobortis mauris, in porta velit luctus vel. Suspendisse vitae venenatis dolor. Donec tristique consequat nisl et blandit. Etiam mattis tellus lectus, id posuere nunc bibendum ut. Cras at nisi a est aliquam viverra. Cras quis ex turpis. Morbi et est id enim mollis convallis. Donec porta porttitor venenatis. Nunc non scelerisque neque. Suspendisse odio arcu, condimentum non elit maximus, accumsan luctus justo. Mauris sit amet lorem cursus, congue ipsum a, ornare lacus.</string>
                                                         <fontDescription key="fontDescription" type="system" pointSize="11"/>
                                                         <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                         <nil key="highlightedColor"/>
                                                     </label>
-                                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ee5-bF-H0L" userLabel="Gradient View">
+                                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ee5-bF-H0L" userLabel="Gradient View" customClass="GradientView" customModule="MovieApp" customModuleProvider="target">
                                                         <rect key="frame" x="0.0" y="22" width="361" height="60"/>
                                                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                         <constraints>
