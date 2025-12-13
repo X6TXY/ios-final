@@ -108,7 +108,7 @@
                                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="qOH-NC-QHy" secondAttribute="trailing" constant="80" id="vYc-lc-17V"/>
                                 </constraints>
                             </view>
-                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="MyW-8g-f6m">
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="MyW-8g-f6m" customClass="CarouselCollectionView" customModule="MovieApp" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="444" width="393" height="180"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
@@ -151,10 +151,6 @@
                                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="displayP3"/>
                                     </collectionViewCell>
                                 </cells>
-                                <connections>
-                                    <outlet property="dataSource" destination="BYZ-38-t0r" id="EfQ-Pz-RLP"/>
-                                    <outlet property="delegate" destination="BYZ-38-t0r" id="sro-b1-nMR"/>
-                                </connections>
                             </collectionView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
@@ -170,7 +166,7 @@
                     </view>
                     <navigationItem key="navigationItem" id="Z91-BK-kvE"/>
                     <connections>
-                        <outlet property="movieCollection" destination="MyW-8g-f6m" id="Vd0-Px-HzK"/>
+                        <outlet property="movieCollection" destination="MyW-8g-f6m" id="1Zj-bi-eb6"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
