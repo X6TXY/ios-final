@@ -9,11 +9,20 @@ import UIKit
 
 class CarouselCollectionView: UICollectionView {
 
-    var itemsCount: Int = 0 {
+    var movies: [Movie] = [] {
         didSet { reloadData() }
     }
 
-    var onSelectItem: ((Int) -> Void)?
+    var onSelectItem: ((Movie) -> Void)?
+
+    /// Computed property for user preference
+    private var animationEnabled: Bool {
+        if UserDefaults.standard.object(forKey: "carouselAnimationEnabled") == nil {
+            // Default: animation ON
+            return true
+        }
+        return UserDefaults.standard.bool(forKey: "carouselAnimationEnabled")
+    }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
@@ -29,15 +38,17 @@ class CarouselCollectionView: UICollectionView {
         dataSource = self
         delegate = self
 
-        collectionViewLayout = Self.createLayout()
+        collectionViewLayout = Self.createLayout(animationEnabled: animationEnabled)
         decelerationRate = .fast
         backgroundColor = .clear
     }
 }
 
+// MARK: - Layout
+
 extension CarouselCollectionView {
 
-    static func createLayout() -> UICollectionViewCompositionalLayout {
+    static func createLayout(animationEnabled: Bool) -> UICollectionViewCompositionalLayout {
 
         UICollectionViewCompositionalLayout { _, environment -> NSCollectionLayoutSection? in
 
@@ -57,12 +68,14 @@ extension CarouselCollectionView {
             let section = NSCollectionLayoutSection(group: group)
             section.orthogonalScrollingBehavior = .continuousGroupLeadingBoundary
 
-            section.visibleItemsInvalidationHandler = { items, offset, environment in
-                let centerX = offset.x + environment.container.contentSize.width / 2
-                for item in items {
-                    let distance = abs(item.center.x - centerX)
-                    let scale = max(1 - (distance / 500), 0.8)
-                    item.transform = CGAffineTransform(scaleX: scale, y: scale)
+            if animationEnabled {
+                section.visibleItemsInvalidationHandler = { items, offset, environment in
+                    let centerX = offset.x + environment.container.contentSize.width / 2
+                    for item in items {
+                        let distance = abs(item.center.x - centerX)
+                        let scale = max(1 - (distance / 500), 0.8)
+                        item.transform = CGAffineTransform(scaleX: scale, y: scale)
+                    }
                 }
             }
 
@@ -71,10 +84,15 @@ extension CarouselCollectionView {
     }
 }
 
+// MARK: - DataSource & Delegate
+
 extension CarouselCollectionView: UICollectionViewDataSource, UICollectionViewDelegate {
 
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        itemsCount
+    func collectionView(
+        _ collectionView: UICollectionView,
+        numberOfItemsInSection section: Int
+    ) -> Int {
+        movies.count
     }
 
     func collectionView(
@@ -82,13 +100,19 @@ extension CarouselCollectionView: UICollectionViewDataSource, UICollectionViewDe
         cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
 
-        dequeueReusableCell(
+        let cell = dequeueReusableCell(
             withReuseIdentifier: "moviePoster",
             for: indexPath
-        )
+        ) as! MovieCollectionViewCell
+
+        let movie = movies[indexPath.item]
+        cell.configure(movie: movie)
+
+        return cell
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        onSelectItem?(indexPath.item)
+        let movie = movies[indexPath.item]
+        onSelectItem?(movie)
     }
 }

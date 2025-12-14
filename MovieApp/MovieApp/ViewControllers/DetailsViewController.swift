@@ -5,7 +5,15 @@
 //  Created by Uldana Shyndali on 13.12.2025.
 //
 
+//
+//  DetailsViewController.swift
+//  MovieApp
+//
+//  Created by Uldana Shyndali on 13.12.2025.
+//
+
 import UIKit
+import Kingfisher
 
 struct CastMember {
     let name: String
@@ -13,8 +21,11 @@ struct CastMember {
 }
 
 class DetailsViewController: UIViewController {
+
     
-    let topCast = [
+    var movie: Movie? = nil
+    
+    private let topCast: [CastMember] = [
         CastMember(name: "Actor 1", image: UIImage(named: "actor")!),
         CastMember(name: "Actor 2", image: UIImage(named: "actor")!),
         CastMember(name: "Actor 3", image: UIImage(named: "actor")!),
@@ -23,6 +34,14 @@ class DetailsViewController: UIViewController {
         CastMember(name: "Actor 6", image: UIImage(named: "actor")!)
     ]
     
+    private var isExpanded = false
+    
+    
+    @IBOutlet weak var movieBackdrop: UIImageView!
+    @IBOutlet weak var moviePoster: UIImageView!
+    @IBOutlet weak var ratingLabel: UILabel!
+    @IBOutlet weak var releaseYearLabel: UILabel!
+    @IBOutlet weak var genreLabel: UILabel!
     @IBOutlet weak var expandButton: UIButton!
     @IBOutlet weak var synopsisContent: UILabel!
     @IBOutlet weak var synopsisGradient: GradientView!
@@ -30,38 +49,17 @@ class DetailsViewController: UIViewController {
     @IBOutlet weak var movieInfoContainer: UIView!
     @IBOutlet weak var movieInfoGradient: GradientView!
     
-    private var isExpanded = false
-    private var synopsisGradientLayer: CAGradientLayer?
-    private var movieInfoGradientLayer: CAGradientLayer?
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupNavigationBar()
-        
-        synopsisContent.numberOfLines = 3
-        expandButton.setImage(UIImage(systemName: "arrow.down"), for: .normal)
-        
-        // Configure cast first so layouts are correct
+        setupUI()
+        configureMovieDetails()
         configureCast(topCast)
-        
-        let bgColor = view.backgroundColor ?? .white
-
-            synopsisGradient.setupGradient(
-                colors: [.clear, bgColor],
-                startPoint: CGPoint(x: 0.5, y: 0),
-                endPoint: CGPoint(x: 0.5, y: 1),
-                locations: [0.0, 0.3]
-            )
-
-            movieInfoGradient.setupGradient(
-                colors: [bgColor, .clear],
-                startPoint: CGPoint(x: 0.5, y: 1),
-                endPoint: CGPoint(x: 0.5, y: 0),
-                locations: [0.0, 1.0]
-            )
     }
-
+    
+    
     private func setupNavigationBar() {
         guard let navBar = navigationController?.navigationBar else { return }
         navBar.setBackgroundImage(UIImage(), for: .default)
@@ -69,6 +67,64 @@ class DetailsViewController: UIViewController {
         navBar.isTranslucent = true
         navBar.backgroundColor = .clear
         navBar.tintColor = .white
+    }
+    
+    private func setupUI() {
+        synopsisContent.numberOfLines = 3
+        expandButton.setImage(UIImage(systemName: "arrow.down"), for: .normal)
+        
+        let bgColor = view.backgroundColor ?? .white
+        
+        synopsisGradient.setupGradient(
+            colors: [.clear, bgColor],
+            startPoint: CGPoint(x: 0.5, y: 0),
+            endPoint: CGPoint(x: 0.5, y: 1),
+            locations: [0.0, 0.3]
+        )
+        
+        movieInfoGradient.setupGradient(
+            colors: [bgColor, .clear],
+            startPoint: CGPoint(x: 0.5, y: 1),
+            endPoint: CGPoint(x: 0.5, y: 0),
+            locations: [0.0, 1.0]
+        )
+    }
+    
+    private func configureMovieDetails() {
+        guard let movie = movie else { return }
+        
+        // Poster & Backdrop
+        if let posterURL = movie.poster_url, let url = URL(string: posterURL) {
+            moviePoster.kf.setImage(
+                with: url,
+                options: [
+                    .transition(.fade(0.35)),
+                    .cacheOriginalImage
+                ]
+            )
+        }
+
+        if let backdropURL = movie.backdrop_url, let url = URL(string: backdropURL) {
+            movieBackdrop.kf.setImage(
+                with: url,
+                options: [
+                    .transition(.fade(0.45)),
+                    .cacheOriginalImage
+                ]
+            )
+        }
+
+        
+        // Labels
+        ratingLabel.text = movie.rating != nil ? "\(movie.rating!)/10" : "-"
+        releaseYearLabel.text = releaseYear(from: movie.release_date)
+        genreLabel.text = movie.genres?.first ?? "-"
+        synopsisContent.text = movie.overview ?? "No synopsis available."
+    }
+    
+    func releaseYear(from dateString: String?) -> String {
+        guard let dateString else { return "N/A" }
+        return String(dateString.prefix(4))
     }
 
     
@@ -84,8 +140,9 @@ class DetailsViewController: UIViewController {
         expandButton.setImage(UIImage(systemName: imageName), for: .normal)
         synopsisGradient.isHidden = isExpanded
     }
-
-    func configureCast(_ cast: [CastMember]) {
+    
+    
+    private func configureCast(_ cast: [CastMember]) {
         var index = 0
         
         for horizontalStack in castStackView.arrangedSubviews {
@@ -110,3 +167,4 @@ class DetailsViewController: UIViewController {
         }
     }
 }
+

@@ -9,23 +9,29 @@ import UIKit
 
 class ClearTabBarController: UITabBarController {
 
-        override func viewDidLoad() {
-            super.viewDidLoad()
-            setupTabBar()
-        }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupTabBar()
+    }
 
-        private func setupTabBar() {
-            // Make tab bar transparent
+    private func setupTabBar() {
+        let isClear = UserDefaults.standard.object(forKey: "tabBarClear") == nil
+            ? true  // Default: clear
+            : UserDefaults.standard.bool(forKey: "tabBarClear")
+        
+        if isClear {
             tabBar.backgroundImage = UIImage()
             tabBar.shadowImage = UIImage()
             tabBar.isTranslucent = true
             tabBar.backgroundColor = .clear
-
-            
-            tabBar.tintColor = .red
-
-     
-            tabBar.unselectedItemTintColor = .lightGray
+        } else {
+            tabBar.backgroundImage = nil
+            tabBar.shadowImage = nil
+            tabBar.isTranslucent = false
+            tabBar.backgroundColor = .white
         }
-    }
 
+        tabBar.tintColor = .red
+        tabBar.unselectedItemTintColor = .lightGray
+    }
+}
