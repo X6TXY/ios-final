@@ -10,9 +10,11 @@ import Kingfisher
 
 class ProfileViewController: UIViewController {
 
-    private let movies: [Movie] = [Movie.dummy1, Movie.dummy2, Movie.dummy1, Movie.dummy2]
-    private let user: User = .dummy1
-    private let profile: Profile = .dummy1
+    private var likedMovies: [Movie] = []
+    private var watchlistMovies: [Movie] = []
+    private var dislikedMovies: [Movie] = []
+    private var user: User? = nil
+    private var profile: Profile? = nil
 
     @IBOutlet weak var username: UILabel!
     @IBOutlet weak var profilePicture: UIImageView!
@@ -31,8 +33,8 @@ class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar() 
-        setupUI()
         setupCarousels()
+        loadUserAndProfile()
         
         if UserDefaults.standard.object(forKey: "carouselAnimationEnabled") == nil {
                 carousselAnimationSwitch.isOn = true
@@ -66,9 +68,12 @@ class ProfileViewController: UIViewController {
     }
 
     private func setupUI() {
-        username.text = user.username
+        let userToShow = user ?? User.dummy1
+        let profileToShow = profile ?? Profile.dummy1
 
-        if let avatarURL = profile.avatar_url,
+        username.text = userToShow.username
+
+        if let avatarURL = profileToShow.avatar_url,
            let url = URL(string: avatarURL) {
             profilePicture.kf.setImage(
                 with: url,
@@ -81,9 +86,9 @@ class ProfileViewController: UIViewController {
     }
 
     private func setupCarousels() {
-        setupCarousel(carousel: likedCollection, movies: movies)
-        setupCarousel(carousel: dislikedCollection, movies: movies)
-        setupCarousel(carousel: watchlistCollection, movies: movies)
+        setupCarousel(carousel: likedCollection, movies: likedMovies)
+        setupCarousel(carousel: dislikedCollection, movies: dislikedMovies)
+        setupCarousel(carousel: watchlistCollection, movies: watchlistMovies)
     }
 
     private func setupCarousel(carousel: CarouselCollectionView, movies: [Movie]) {
@@ -99,6 +104,71 @@ class ProfileViewController: UIViewController {
 
             detailsVC.movie = movie
             self.navigationController?.pushViewController(detailsVC, animated: true)
+        }
+    }
+
+    private func loadUserAndProfile() {
+        APIClient.shared.getCurrentUser { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let user):
+                    self.user = user
+                    UserDefaults.standard.set(user.id, forKey: "current_user_id")
+                    self.fetchProfileAndMovies(for: user.id)
+                case .failure:
+                    self.setupUI() // fallback to dummy
+                }
+            }
+        }
+    }
+
+    private func fetchProfileAndMovies(for userId: String) {
+        let group = DispatchGroup()
+
+        group.enter()
+        APIClient.shared.getProfile(userId: userId) { [weak self] profileResult in
+            DispatchQueue.main.async {
+                self?.profile = try? profileResult.get()
+                group.leave()
+            }
+        }
+
+        group.enter()
+        APIClient.shared.getRecommendations { [weak self] moviesResult in
+            DispatchQueue.main.async {
+                if let movies = try? moviesResult.get() {
+                    self?.likedMovies = movies
+                    self?.watchlistMovies = movies
+                    self?.dislikedMovies = movies
+                    group.leave()
+                } else {
+                    self?.loadFallbackMovies(group: group)
+                }
+            }
+        }
+
+        group.notify(queue: .main) { [weak self] in
+            self?.setupUI()
+            self?.setupCarousels()
+        }
+    }
+
+    private func loadFallbackMovies(group: DispatchGroup) {
+        APIClient.shared.getMovies { [weak self] result in
+            DispatchQueue.main.async {
+                defer { group.leave() }
+                switch result {
+                case .success(let movies):
+                    self?.likedMovies = movies
+                    self?.watchlistMovies = movies
+                    self?.dislikedMovies = movies
+                case .failure:
+                    self?.likedMovies = []
+                    self?.watchlistMovies = []
+                    self?.dislikedMovies = []
+                }
+            }
         }
     }
     @IBAction func carousselAnimationToggled(_ sender: UISwitch) {

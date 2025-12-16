@@ -6,8 +6,13 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class MatchingViewController: UIViewController {
+
+    private var movies: [Movie] = []
+    private var currentIndex: Int = 0
+    private var swipedMovieIds = Set<String>()
 
     // Background blur behind the main card
     private let backgroundImageView: UIImageView = {
@@ -41,7 +46,6 @@ final class MatchingViewController: UIViewController {
 
     private let posterImageView: UIImageView = {
         let iv = UIImageView()
-        iv.image = UIImage(named: "ironman")
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
         iv.layer.cornerRadius = 20
@@ -76,7 +80,6 @@ final class MatchingViewController: UIViewController {
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Iron Man"
         label.font = .boldSystemFont(ofSize: 26)
         label.textColor = .white
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -85,18 +88,7 @@ final class MatchingViewController: UIViewController {
 
 
     private lazy var tagsStack: UIStackView = {
-        let tags = ["Fantasy", "Noir", "French new wave"]
-        let arranged = tags.map { text -> UILabel in
-            let label = PaddingLabel(insets: UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12))
-            label.text = text
-            label.font = .systemFont(ofSize: 12, weight: .semibold)
-            label.textColor = .white
-            label.layer.cornerRadius = 14
-            label.layer.masksToBounds = true
-            label.backgroundColor = UIColor.black.withAlphaComponent(0.45)
-            return label
-        }
-        let stack = UIStackView(arrangedSubviews: arranged)
+        let stack = UIStackView()
         stack.axis = .horizontal
         stack.spacing = 8
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -184,6 +176,7 @@ final class MatchingViewController: UIViewController {
         setupCard()
         setupButtons()
         addGestures()
+        fetchMovies()
     }
 
     override func viewDidLayoutSubviews() {
@@ -342,6 +335,7 @@ final class MatchingViewController: UIViewController {
 
 
     private func swipeRight(_ card: UIView) {
+        sendSwipe(direction: .like)
         UIView.animate(withDuration: 0.3, animations: {
             card.center.x += 400
             card.alpha = 0
@@ -351,6 +345,7 @@ final class MatchingViewController: UIViewController {
     }
 
     private func swipeLeft(_ card: UIView) {
+        sendSwipe(direction: .dislike)
         UIView.animate(withDuration: 0.3, animations: {
             card.center.x -= 400
             card.alpha = 0
@@ -374,12 +369,118 @@ final class MatchingViewController: UIViewController {
     @objc private func didDislike() { swipeLeft(cardView) }
 
     private func loadNextCard() {
-        // Reset
+        currentIndex += 1
+
+        // Пропускаем уже свайпнутые
+        while currentIndex < movies.count,
+              let id = movies[currentIndex].id,
+              swipedMovieIds.contains(id) {
+            currentIndex += 1
+        }
+
+        guard currentIndex < movies.count else {
+            // Если карточки кончились, загружаем следующую пачку
+            fetchMovies()
+            return
+        }
+
+        configureCard(with: movies[currentIndex])
+
+        // Сбрасываем состояние карточки для анимации
         cardView.alpha = 1
         cardView.center = view.center
         cardView.transform = .identity
         likeLabel.alpha = 0
         nopeLabel.alpha = 0
+    }
+
+    private func configureCard(with movie: Movie) {
+        titleLabel.text = movie.title
+
+        // tags from genres
+        tagsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        if let genres = movie.genres {
+            for genre in genres.prefix(3) { // Показываем не больше 3 жанров
+                let label = PaddingLabel(insets: UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12))
+                label.text = genre
+                label.font = .systemFont(ofSize: 12, weight: .semibold)
+                label.textColor = .white
+                label.layer.cornerRadius = 14
+                label.layer.masksToBounds = true
+                label.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+                tagsStack.addArrangedSubview(label)
+            }
+        }
+
+        if let url = movie.posterURL {
+            posterImageView.kf.setImage(with: url, options: [.transition(.fade(0.35)), .cacheOriginalImage])
+        } else {
+            posterImageView.image = UIImage(named: "movie1") // Placeholder
+        }
+    }
+
+    private func fetchMovies() {
+        // Простая загрузка каталога фильмов
+        APIClient.shared.getMovies { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let movies):
+                    self.reset(with: movies)
+                case .failure:
+                    // В случае полной ошибки показываем пустой экран
+                    self.movies = []
+                    self.currentIndex = 0
+                }
+            }
+        }
+    }
+
+    private func reset(with movies: [Movie]) {
+        // Фильтруем уже свайпнутые
+        let filtered = movies.filter { movie in
+            guard let id = movie.id else { return false }
+            return !swipedMovieIds.contains(id)
+        }
+
+        self.movies = filtered
+        self.currentIndex = 0
+        if let first = filtered.first {
+            self.configureCard(with: first)
+        } else {
+            // Если и тут пусто, значит, рекомендовать нечего
+            // (можно показать какой-то плейсхолдер)
+            titleLabel.text = "No more movies"
+            posterImageView.image = nil
+        }
+    }
+
+    private func sendSwipe(direction: SwipeDirection) {
+        guard currentIndex < movies.count, let movieId = movies[currentIndex].id else {
+            return
+        }
+
+        // Мы больше не отслеживаем свайпы на клиенте, просто отправляем на бэк
+        swipedMovieIds.insert(movieId)
+
+        guard let userId = UserDefaults.standard.string(forKey: "current_user_id") else {
+            print("Error: user_id not found in UserDefaults")
+            return
+        }
+
+        APIClient.shared.swipe(
+            movieId: movieId,
+            userId: userId,
+            direction: direction
+        ) { result in
+            // Можно обработать результат, если нужно
+            switch result {
+            case .success:
+                print("Swipe for movie \(movieId) sent successfully.")
+            case .failure(let error):
+                print("Failed to send swipe: \(error.localizedDescription)")
+            }
+        }
     }
 }
 

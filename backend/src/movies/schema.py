@@ -78,3 +78,15 @@ class StatusOut(BaseModel):
 class SwipeCreate(BaseModel):
     user_id: UUID
     direction: str
+
+
+class ActivityItem(BaseModel):
+    movie: MovieOut
+    direction: str  # "like" | "dislike"
+    created_at: datetime
+
+
+class CastMemberOut(BaseModel):
+    name: str
+    character: str | None = None
+    profile_url: str | None = None

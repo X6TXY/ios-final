@@ -7,10 +7,9 @@
 
 import UIKit
 
-
 class FeedViewController: UIViewController {
 
-    private let activities: [FriendsActivity] = FriendsActivity.dummies
+    private var activities: [FriendsActivity] = []
 
     @IBOutlet private weak var table: UITableView!
 
@@ -20,9 +19,55 @@ class FeedViewController: UIViewController {
         table.dataSource = self
         table.delegate = self
 
+        loadFeed()
+    }
+
+    private func loadFeed() {
+        APIClient.shared.getMyActivity { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let items):
+                    self.activities = self.mapActivityItemsToFeed(items: items)
+                    self.table.reloadData()
+                case .failure:
+                    self.activities = []
+                    self.table.reloadData()
+                }
+            }
+        }
+    }
+
+    private func mapActivityItemsToFeed(items: [MovieActivityItem]) -> [FriendsActivity] {
+        let currentUser = User(
+            id: UserDefaults.standard.string(forKey: "current_user_id") ?? "",
+            email: UserDefaults.standard.string(forKey: "current_user_email") ?? "",
+            username: UserDefaults.standard.string(forKey: "current_user_username") ?? "me"
+        )
+        let profile = Profile(
+            avatar_url: nil,
+            id: "",
+            user_id: currentUser.id
+        )
+
+        return items.map { item in
+            let activity: Activity
+            switch item.direction {
+            case "dislike":
+                activity = .dislike
+            default:
+                activity = .like
+            }
+
+            return FriendsActivity(
+                movie: item.movie,
+                user: currentUser,
+                user_profile: profile,
+                activity: activity
+            )
+        }
     }
 }
-
 
 extension FeedViewController: UITableViewDataSource {
 
@@ -45,7 +90,6 @@ extension FeedViewController: UITableViewDataSource {
         return cell
     }
 }
-
 
 extension FeedViewController: UITableViewDelegate {
 

@@ -58,6 +58,16 @@ final class AuthFieldView: UIView {
             attributes: [.foregroundColor: UIColor.lightGray]
         )
         textField.autocapitalizationType = .none   // disable autocapitalize
+        textField.autocorrectionType = .no
+        textField.spellCheckingType = .no
+        textField.smartDashesType = .no
+        textField.smartQuotesType = .no
+        textField.smartInsertDeleteType = .no
+
+        // Hide QuickType bar to avoid autofill / emoji suggestions stealing focus
+        let assistant = textField.inputAssistantItem
+        assistant.leadingBarButtonGroups = []
+        assistant.trailingBarButtonGroups = []
         addSubview(textField)
         textField.translatesAutoresizingMaskIntoConstraints = false
 
@@ -93,18 +103,20 @@ final class AuthFieldView: UIView {
             iconImageView.image = UIImage(systemName: "person.fill")
             textField.placeholder = "Username"
             textField.isSecureTextEntry = false
+            textField.textContentType = .username
             toggleButton.isHidden = true
         case .email:
             iconImageView.image = UIImage(systemName: "envelope.fill")
             textField.placeholder = "Email"
             textField.keyboardType = .emailAddress
             textField.isSecureTextEntry = false
+            textField.textContentType = .emailAddress
             toggleButton.isHidden = true
         case .password, .confirmPassword:
             iconImageView.image = UIImage(systemName: "lock.fill")
             textField.placeholder = fieldType == .password ? "Password" : "Confirm Password"
             textField.isSecureTextEntry = true
-            textField.textContentType = .none
+            textField.textContentType = .oneTimeCode // disables system strong-password prompt
             textField.autocorrectionType = .no
             textField.passwordRules = nil
             toggleButton.isHidden = false

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.app.db import get_async_db
 from src.auth import crud
 from src.auth.deps import get_current_user
@@ -16,11 +15,17 @@ async def signup(
     payload: SignupRequest,
     db: AsyncSession = Depends(get_async_db),
 ):
-    existing = await crud.get_user_by_email(db, payload.email)
-    if existing:
+    existing_email = await crud.get_user_by_email(db, payload.email)
+    if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
+        )
+    existing_username = await crud.get_user_by_username(db, payload.username)
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered",
         )
     user = await crud.create_user(db, payload.email, payload.username, payload.password)
     # создать связанный профиль по умолчанию

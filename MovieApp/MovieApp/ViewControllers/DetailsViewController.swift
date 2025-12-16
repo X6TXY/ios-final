@@ -17,7 +17,7 @@ import Kingfisher
 
 struct CastMember {
     let name: String
-    let image: UIImage
+    let imageURL: URL?
 }
 
 class DetailsViewController: UIViewController {
@@ -25,14 +25,7 @@ class DetailsViewController: UIViewController {
     
     var movie: Movie? = nil
     
-    private let topCast: [CastMember] = [
-        CastMember(name: "Actor 1", image: UIImage(named: "actor")!),
-        CastMember(name: "Actor 2", image: UIImage(named: "actor")!),
-        CastMember(name: "Actor 3", image: UIImage(named: "actor")!),
-        CastMember(name: "Actor 4", image: UIImage(named: "actor")!),
-        CastMember(name: "Actor 5", image: UIImage(named: "actor")!),
-        CastMember(name: "Actor 6", image: UIImage(named: "actor")!)
-    ]
+    private var topCast: [CastMember] = []
     
     private var isExpanded = false
     
@@ -56,7 +49,7 @@ class DetailsViewController: UIViewController {
         setupNavigationBar()
         setupUI()
         configureMovieDetails()
-        configureCast(topCast)
+        loadCast()
     }
     
     
@@ -94,9 +87,9 @@ class DetailsViewController: UIViewController {
         guard let movie = movie else { return }
         
         // Poster & Backdrop
-        if let posterURL = movie.poster_url, let url = URL(string: posterURL) {
+        if let posterURL = movie.posterURL {
             moviePoster.kf.setImage(
-                with: url,
+                with: posterURL,
                 options: [
                     .transition(.fade(0.35)),
                     .cacheOriginalImage
@@ -153,7 +146,11 @@ class DetailsViewController: UIViewController {
                 let castMember = cast[index]
                 
                 if let imageView = view.viewWithTag(1) as? UIImageView {
-                    imageView.image = castMember.image
+                    if let url = castMember.imageURL {
+                        imageView.kf.setImage(with: url, placeholder: UIImage(named: "actor"))
+                    } else {
+                        imageView.image = UIImage(named: "actor")
+                    }
                     imageView.layer.cornerRadius = imageView.bounds.width / 2
                     imageView.clipsToBounds = true
                 }
@@ -163,6 +160,24 @@ class DetailsViewController: UIViewController {
                 }
                 
                 index += 1
+            }
+        }
+    }
+
+    private func loadCast() {
+        guard let movieId = movie?.id else { return }
+        APIClient.shared.getCast(movieId: movieId) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let members):
+                    self.topCast = members.map {
+                        CastMember(name: $0.name, imageURL: $0.profileURL)
+                    }
+                    self.configureCast(self.topCast)
+                case .failure:
+                    break
+                }
             }
         }
     }

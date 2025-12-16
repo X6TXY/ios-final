@@ -23,12 +23,7 @@ class MovieCollectionViewCell: UICollectionViewCell {
     func configure(movie: Movie) {
         moviePoster.image = placeholderImage
 
-        guard
-            let posterURLString = movie.poster_url,
-            let url = URL(string: posterURLString)
-        else {
-            return
-        }
+        guard let url = movie.posterURL else { return }
 
         moviePoster.kf.setImage(
             with: url,

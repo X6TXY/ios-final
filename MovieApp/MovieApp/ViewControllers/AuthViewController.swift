@@ -25,13 +25,11 @@ final class AuthViewController: UIViewController {
         setupSegmentedControl()
         updateUIForSelectedSegment()
         
-        // Setup field types
         usernameFieldView.fieldType = .username
         emailFieldView.fieldType = .email
         passwordFieldView.fieldType = .password
         passwordConfirmFieldView.fieldType = .confirmPassword
         
-        // Add target for text change
         [usernameFieldView, emailFieldView, passwordFieldView, passwordConfirmFieldView].forEach { field in
             field.textField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
         }
@@ -91,25 +89,55 @@ final class AuthViewController: UIViewController {
     
     @IBAction func authAction(_ sender: UIButton) {
         let isSignIn = authSegmentedControl.selectedSegmentIndex == 0
-        
+
+        authButton.isEnabled = false
+
         if isSignIn {
             let request = SignInRequest(
                 email: emailFieldView.text ?? "",
                 password: passwordFieldView.text ?? ""
             )
-            print("Sign In Request: \(request)")
+
+            APIClient.shared.signIn(request) { [weak self] result in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.authButton.isEnabled = true
+                    switch result {
+                    case .success(let user):
+                        UserDefaults.standard.set(true, forKey: "authorized")
+                        UserDefaults.standard.set(user.id, forKey: "current_user_id")
+                        UserDefaults.standard.set(user.email, forKey: "current_user_email")
+                        UserDefaults.standard.set(user.username, forKey: "current_user_username")
+                        self.authSucceeded()
+                    case .failure(let error):
+                        self.showError(error)
+                    }
+                }
+            }
         } else {
             let request = SignUpRequest(
                 email: emailFieldView.text ?? "",
                 password: passwordFieldView.text ?? "",
                 username: usernameFieldView.text ?? ""
             )
-            print("Sign Up Request: \(request)")
+
+            APIClient.shared.signUp(request) { [weak self] result in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.authButton.isEnabled = true
+                    switch result {
+                    case .success(let user):
+                        UserDefaults.standard.set(true, forKey: "authorized")
+                        UserDefaults.standard.set(user.id, forKey: "current_user_id")
+                        UserDefaults.standard.set(user.email, forKey: "current_user_email")
+                        UserDefaults.standard.set(user.username, forKey: "current_user_username")
+                        self.authSucceeded()
+                    case .failure(let error):
+                        self.showError(error)
+                    }
+                }
+            }
         }
-        
-        UserDefaults.standard.set(true, forKey: "authorized")
-        print("UserDefaults 'authorized' = true")
-        authSucceeded()
     }
     
     func authSucceeded() {
@@ -118,7 +146,6 @@ final class AuthViewController: UIViewController {
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
             let mainTabBar = storyboard.instantiateViewController(withIdentifier: "ClearTabBarController")
             
-            // Animate transition
             UIView.transition(with: window,
                               duration: 0.3,
                               options: .transitionCrossDissolve,
@@ -127,6 +154,16 @@ final class AuthViewController: UIViewController {
             })
             
             self.view.window?.rootViewController = mainTabBar
+    }
+
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(
+            title: "Error",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 }
 

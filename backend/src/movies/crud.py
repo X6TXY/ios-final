@@ -43,6 +43,9 @@ async def upsert_movie_from_tmdb(
         except ValueError:
             release_date = None
 
+    poster_path = tmdb_movie.get("poster_path")
+    backdrop_path = tmdb_movie.get("backdrop_path")
+
     payload = {
         "tmdb_id": tmdb_id,
         "title": tmdb_movie.get("title") or tmdb_movie.get("name"),
@@ -50,8 +53,8 @@ async def upsert_movie_from_tmdb(
         "release_date": release_date,
         "rating": tmdb_movie.get("vote_average"),
         "popularity": tmdb_movie.get("popularity"),
-        "poster_url": tmdb_movie.get("poster_path"),
-        "backdrop_url": tmdb_movie.get("backdrop_path"),
+        "poster_url": f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None,
+        "backdrop_url": f"https://image.tmdb.org/t/p/w500{backdrop_path}" if backdrop_path else None,
         "genres": genres,
         "keywords": kw_list,
         "metadata_json": tmdb_movie,

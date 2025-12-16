@@ -52,8 +52,7 @@ class MovieTableViewCell: UITableViewCell {
         }
 
         // Movie poster
-        if let posterURL = movie.poster_url,
-           let url = URL(string: posterURL) {
+        if let url = movie.posterURL {
             moviePoster.kf.setImage(
                 with: url,
                 placeholder: UIImage(named: "poster_placeholder"),

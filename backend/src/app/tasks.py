@@ -377,8 +377,60 @@ def prepare_swipe_batch(user_id: str) -> None:
     """
     Background job: precompute 20 swipeable movies for the user and
     store them in Redis so the iOS client can quickly fetch them.
-
-    NOTE: left as a placeholder – implement Redis queueing as needed.
     """
-    return None
+
+    async def _run() -> None:
+        async with SessionLocal() as session:
+            try:
+                uid = UUID(user_id)
+            except ValueError:
+                return
+
+            # 1. Get all movie IDs the user has already interacted with
+            swipe_q = await session.execute(
+                select(Swipe.movie_id).where(Swipe.user_id == uid)
+            )
+            fav_q = await session.execute(
+                select(Favorite.movie_id).where(Favorite.user_id == uid)
+            )
+            dislike_q = await session.execute(
+                select(Dislike.movie_id).where(Dislike.user_id == uid)
+            )
+            seen_ids = {
+                *swipe_q.scalars().all(),
+                *fav_q.scalars().all(),
+                *dislike_q.scalars().all(),
+            }
+
+            # 2. Get the user's top recommendations
+            rec_q = await session.execute(
+                select(AIRecommendation)
+                .where(AIRecommendation.user_id == uid)
+                .order_by(AIRecommendation.score.desc())
+                .limit(100)
+            )
+            recommendations = rec_q.scalars().all()
+
+            # 3. Filter out seen movies and take the top 20
+            unseen_recs = [rec.movie_id for rec in recommendations if rec.movie_id not in seen_ids]
+            batch = unseen_recs[:20]
+
+            if not batch:
+                return
+
+            # 4. Store the batch in Redis
+            redis_client = get_redis_client()
+            redis_key = f"swipe_batch:{user_id}"
+            
+            # Use a pipeline to clear the old list and add the new one atomically
+            async with redis_client.pipeline() as pipe:
+                pipe.delete(redis_key)
+                # str(m_id) is important because Redis stores strings
+                pipe.rpush(redis_key, *[str(m_id) for m_id in batch])
+                await pipe.execute()
+
+    import asyncio
+    from src.app.redis import get_redis_client
+
+    asyncio.run(_run())
 

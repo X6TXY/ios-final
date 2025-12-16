@@ -10,8 +10,8 @@ import Kingfisher
 
 class HomeViewController: UIViewController {
 
-    let movies = [Movie.dummy1, Movie.dummy2, Movie.dummy2, Movie.dummy2]
-    let premiere = Movie.dummy3
+    private var movies: [Movie] = []
+    private var premiere: Movie?
 
     @IBOutlet weak var premierPoster: UIImageView!
     @IBOutlet weak var tagsStack: UIStackView!
@@ -23,14 +23,12 @@ class HomeViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupPremierSection()
-        setupCollection()
+        loadRecommendations()
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        // Fix gradient cropping by setting the frame to the full view width
         gradientLayer.frame = CGRect(
             x: 0,
             y: gradientLayer.frame.origin.y,
@@ -45,9 +43,34 @@ class HomeViewController: UIViewController {
         )
     }
 
+    private func loadRecommendations() {
+        APIClient.shared.getMovies { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let movies):
+                    self.movies = movies
+                    self.premiere = movies.first
+                case .failure:
+                    self.movies = []
+                    self.premiere = nil
+                }
+                self.setupPremierSection()
+                self.setupCollection()
+            }
+        }
+    }
+
     private func setupPremierSection() {
-        // Poster
-        if let posterURL = premiere.poster_url, let url = URL(string: posterURL) {
+        guard let movie = premiere else {
+            premierPoster.image = UIImage(systemName: "film")
+            premierTitle.text = "No data"
+            premierOverview.text = "No overview available."
+            tagsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            return
+        }
+
+        if let url = movie.posterURL {
             premierPoster.kf.setImage(
                 with: url,
                 options: [.transition(.fade(0.35)), .cacheOriginalImage]
@@ -56,23 +79,19 @@ class HomeViewController: UIViewController {
             premierPoster.image = UIImage(systemName: "film")
         }
 
-        // Title in all caps
-        premierTitle.text = premiere.title.uppercased()
+        premierTitle.text = movie.title.uppercased()
+        premierOverview.text = movie.overview ?? "No overview available."
 
-        // Overview
-        premierOverview.text = premiere.overview ?? "No overview available."
-
-        // Add genres as individual labels, keep last element in stack
-        if let genres = premiere.genres {
-            for (index, genre) in genres.enumerated() {
+        tagsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        if let genres = movie.genres {
+            for genre in genres {
                 let genreLabel = UILabel()
                 genreLabel.text = genre
                 genreLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
                 genreLabel.textColor = .white
                 genreLabel.numberOfLines = 1
                 genreLabel.textAlignment = .center
-                // Insert at start to keep last element intact
-                tagsStack.insertArrangedSubview(genreLabel, at: index)
+                tagsStack.addArrangedSubview(genreLabel)
             }
         }
     }
@@ -88,5 +107,6 @@ class HomeViewController: UIViewController {
             detailsVC.movie = movie
             self.navigationController?.pushViewController(detailsVC, animated: true)
         }
+        movieCollection.reloadData()
     }
 }

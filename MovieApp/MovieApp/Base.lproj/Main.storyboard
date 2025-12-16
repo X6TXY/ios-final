@@ -1187,7 +1187,7 @@
         <scene sceneID="XXU-1R-QXz">
             <objects>
                 <viewController id="gBA-yB-5gj" userLabel="Onboarding Controller" customClass="OnboardingViewController" customModule="MovieApp" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="iKS-7S-gv7" customClass="onboar">
+                    <view key="view" contentMode="scaleToFill" id="iKS-7S-gv7">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>

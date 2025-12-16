@@ -1,7 +1,6 @@
 from typing import Any, Dict, List
 
 import httpx
-
 from src.app.config import get_settings
 
 settings = get_settings()
@@ -83,6 +82,15 @@ def fetch_movie_details(
         resp.raise_for_status()
         return resp.json()
 
+
+def fetch_movie_credits(movie_id: str) -> Dict[str, Any]:
+    """
+    Wrapper for /movie/{movie_id}/credits.
+    """
+    with _client() as client:
+        resp = client.get(f"/movie/{movie_id}/credits")
+        resp.raise_for_status()
+        return resp.json()
 
 def fetch_movie_keywords(movie_id: int) -> List[Dict[str, Any]]:
     with _client() as client:
